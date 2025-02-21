@@ -35,7 +35,7 @@ def adjacency_to_incidence(adj_matrix):
     return incidence
 
 
-def diagonal_edge_weights(adj_matrix):
+def edge_weights(adj_matrix):
     """
     Convert a weighted adjacency matrix of a simple undirected graph to a diagonal matrix of edge weights.
     
@@ -64,7 +64,7 @@ def diagonal_edge_weights(adj_matrix):
     return weight_diag
 
 
-def weighted_laplacian_matrix(incidence_matrix, edge_weights):
+def weighted_graph_laplacian(incidence_matrix, edge_weights):
     """
     Compute the Laplacian matrix of a weighted undirected graph.
     
@@ -91,10 +91,10 @@ if __name__ == '__main__':
     print("Incidence Matrix:")
     print(incidence_matrix)
 
-    weight_diag = diagonal_edge_weights(adj_matrix)
+    weight_diag = edge_weights(adj_matrix)
     print("\nWeight Diagonal Matrix:")
     print(weight_diag)
 
-    laplacian = weighted_laplacian_matrix(incidence_matrix, weight_diag)
+    laplacian = weighted_graph_laplacian(incidence_matrix, weight_diag)
     print("\nWeighted Laplacian Matrix:")
     print(laplacian)
