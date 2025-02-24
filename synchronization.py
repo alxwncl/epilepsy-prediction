@@ -13,7 +13,10 @@ def instantaneous_phase(record):
 
 def wpli(ref, comp):
     difference = np.sin(ref - comp)
-    return np.abs(np.sum(difference)) / np.sum(np.abs(difference))
+    denominator = np.sum(np.abs(difference))
+    if denominator == 0:
+        return 0.0
+    return np.abs(np.sum(difference)) / denominator
 
 
 def pli(ref, comp):
