@@ -11,7 +11,7 @@ from util import window_steps, parse_seizure_file, get_path
 
 from preprocessing import get_bands
 
-from matrix import frobenius_norm, riemannian_metric_spd, ponderated_difference
+from matrix import frobenius_norm, riemannian_metric_spd, ponderated_difference, moving_average
 
 from graph import adjacency_to_incidence, edge_weights, weighted_graph_laplacian
 
@@ -22,8 +22,8 @@ from plots import plot_seizure
 
 
 # File name
-patient = 1
-record = 4
+patient = 4
+record = 5
 patient_name, record_path = get_path(patient, record)
 dir_path = '..\\chb-mit-scalp-eeg-database-1.0.0\\'
 
@@ -59,30 +59,34 @@ all_laplacians = []
 for band, wpli_val in zip(bands_names, wpli_vals):
     incidences = [adjacency_to_incidence(mat) for mat in wpli_val]
     weights = [edge_weights(mat) for mat in wpli_val]
-    band_laplacians = [weighted_graph_laplacian(incidence, weight) for incidence, weight in zip(incidences, weights)]
+    band_laplacians = np.array([weighted_graph_laplacian(incidence, weight) for incidence, weight in zip(incidences, weights)])
     all_laplacians.append(band_laplacians)
     print(f'Laplacians computed for band {band}')
+
+# Compute difference with average
+all_avg = [moving_average(band_laplacians, 100) for band_laplacians in all_laplacians]
+laplacians_wrt_avg = [np.hstack((np.full(99, np.nan), frobenius_norm(band_laplacians[99:], band_avg))) for band_laplacians, band_avg in zip(all_laplacians, all_avg)]
 
 # Compute dynamic differences
 # differences = [ponderated_difference(band_laplacians, frobenius_norm, k=50, alpha=10e-32) for band_laplacians in all_laplacians]
 
-eig_results = [np.linalg.eig(laplacian) for laplacian in all_laplacians]
-all_eigenvalues = np.array([result[0] for result in eig_results])
+# eig_results = [np.linalg.eig(laplacian) for laplacian in all_laplacians]
+# all_eigenvalues = np.array([result[0] for result in eig_results])
 # eigenvectors = np.array([result[1]*np.sign(result[1]) for result in eig_results])
 
-# Sort embeddings
-for band_eigenvalues in all_eigenvalues:
-    sorted_indices = [np.argsort(eigenvalues) for eigenvalues in band_eigenvalues]
-    band_eigenvalues = [eigenvalues[sorted_index] for eigenvalues, sorted_index in zip(band_eigenvalues, sorted_indices)]
-fielder_eigenvalues = [eigenvalue[:, 1] for eigenvalue in all_eigenvalues]
+# # Sort embeddings
+# for band_eigenvalues in all_eigenvalues:
+#     sorted_indices = [np.argsort(eigenvalues) for eigenvalues in band_eigenvalues]
+#     band_eigenvalues = [eigenvalues[sorted_index] for eigenvalues, sorted_index in zip(band_eigenvalues, sorted_indices)]
+# fielder_eigenvalues = [eigenvalue[:, 1] for eigenvalue in all_eigenvalues]
 # eigenvectors = np.array([eigenvector[:, sorted_index] for eigenvector, sorted_index in zip(eigenvectors, sorted_indices)])
 
 
 # Plot k's
 N = wpli_vals[0].shape[0]
 time_windows = window_steps(0, N, window_duration, step_duration)
-_, axes = plt.subplots(max(len(fielder_eigenvalues), 2), 1, figsize=(10, 10), sharex=True)
+_, axes = plt.subplots(max(len(laplacians_wrt_avg), 2), 1, figsize=(10, 10), sharex=True)
 axes.flatten()
-for i in range(len(fielder_eigenvalues)):
-    plot_seizure(fielder_eigenvalues[i], time_windows, bands_names[i], seizures=seizures, ax=axes[i])
+for i in range(len(laplacians_wrt_avg)):
+    plot_seizure(laplacians_wrt_avg[i], time_windows, bands_names[i], seizures=seizures, ax=axes[i])
 plt.show()
