@@ -57,6 +57,18 @@ def parse_seizure_file(file_path):
     return results
 
 
+def get_path(patient, record):
+    if patient < 10:
+        patient_name = f'chb0{patient}'
+    else:
+        patient_name = f'chb{patient}'
+    if record < 10:
+        record_path = patient_name + f'_0{record}.edf'
+    else:
+        record_path = patient_name + f'_{record}.edf'
+    return patient_name, record_path
+
+
 if __name__ == "__main__":
     file_path = "chb-mit-scalp-eeg-database-1.0.0\chb03\chb03-summary.txt"
     seizure_info = parse_seizure_file(file_path)

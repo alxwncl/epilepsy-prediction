@@ -83,11 +83,35 @@ def moving_average(data, window_size):
     return results
 
 
+def ponderated_difference(data, distance, k, alpha):
+    n_samples = len(data)
+
+    # Set increasing weigths adding up to 1
+    ks = np.arange(1, k+1, 1) / (k *(k+1))
+    weigths = (1/alpha)**(ks-1) / np.sum((1/alpha)**(ks-1))
+    # print(weigths)
+    # print(np.sum(weigths))
+    
+    results = np.zeros(n_samples)
+    for i in range(n_samples):
+        if i < k:
+            results[i] = float('NaN')
+        else:
+            for j in range(k):
+                results[i] += weigths[j] * distance(data[i], data[i-j])
+    
+    return results
+
 
 if __name__=='__main__':
-    
-    # Test the riemannian_spd function
-    test_matrix = np.full((10, 3, 3), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
-    print(test_matrix.shape)
-    result = riemannian_metric_spd(test_matrix, test_matrix)
+
+    # Create a simple test dataset: a list of 1D arrays with increasing integers
+    data = [np.array([[1, 2], [3, 4]])*i for i in range(10)]
+    k = 50
+
+    result = ponderated_difference(data, riemannian_metric_spd, k, 10e-32)
+
+    print("Input data:")
+    print(np.array(data))
+    print("\nResult of ponderated_difference:")
     print(result)
