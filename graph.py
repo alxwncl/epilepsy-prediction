@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import sqrtm
 
 
 
@@ -22,7 +23,7 @@ def adjacency_to_incidence(adj_matrix):
     # List to hold edges
     edges = []
     for i in range(n):
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             if A[i, j] != 0:
                 edges.append((i, j))
 
@@ -64,17 +65,41 @@ def edge_weights(adj_matrix):
     return weight_diag
 
 
-def weighted_graph_laplacian(incidence_matrix, edge_weights):
+def degree_matrix(adj_matrix):
+    """
+    Compute the degree matrix from an adjacency matrix.
+
+    Parameters:
+        adj_matrix (numpy.ndarray): A square numpy array representing the adjacency matrix.
+        
+    Returns:
+        numpy.ndarray: A diagonal matrix where each diagonal entry is the degree of the corresponding vertex.
+    """
+    # Sum each row to compute the degree for each vertex
+    degrees = np.sum(adj_matrix, axis=1)
+    # Create a diagonal matrix using these degrees
+    D = np.diag(degrees)
+    return D
+
+
+def weighted_graph_laplacian(incidence_matrix, edge_weights, adj_matrix=None):
     """
     Compute the Laplacian matrix of a weighted undirected graph.
     
     Parameters:
-    - adj_matrix (2D array-like): An n x n adjacency matrix representing the graph.
+    - incidence_matrix (2D array-like): An n x e incidence matrix representing the graph.
+    - edge_weights (2D array-like): An e x e diagonal matrix of edges' weights.
+    - adj_matrix (2D array-like): An n x n adjacency matrix representing the graph
+                                        used to normalize the Laplacian.
     
     Returns:
     - laplacian (numpy.ndarray): An n x n Laplacian matrix.
     """
-    return incidence_matrix @ edge_weights @ incidence_matrix.T
+    if adj_matrix is not None:
+        pdegree_matrix = sqrtm(np.linalg.pinv(degree_matrix(adj_matrix)))
+    else:
+        pdegree_matrix = np.identity(incidence_matrix.shape[0])
+    return pdegree_matrix @ incidence_matrix @ edge_weights @ incidence_matrix.T @ pdegree_matrix
 
 
 
