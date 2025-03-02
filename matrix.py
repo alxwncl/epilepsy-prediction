@@ -14,17 +14,20 @@ def shape_errors(A, B):
         return True
 
 
-def frobenius_norm(A, B):
+def frobenius_norm(A, B, normalize=False):
     if not shape_errors(A, B):
         return -1
     diff = A - B
     if A.ndim == 2:
         return np.linalg.norm(diff)
     elif A.ndim == 3:
-        return np.linalg.norm(diff, axis=(-2, -1))
+        result = np.linalg.norm(diff, axis=(-2, -1))
+        if normalize:
+            return result / np.sum(result)
+        return result
     
 
-def airm(A, B):
+def airm(A, B, normalize=False):
     if not shape_errors(A, B):
         return -1
     if A.ndim == 2:
@@ -35,10 +38,12 @@ def airm(A, B):
         for i, (a, b) in enumerate(zip(A, B)):
             root = sqrtm(a)
             result[i] = np.linalg.norm(np.log(root @ b @ root))
+        if normalize:
+            return result / np.sum(result)
         return result
     
 
-def riemannian_metric_spd(A, B):
+def riemannian_metric_spd(A, B, normalize=False):
     if not shape_errors(A, B):
         return -1
     if A.ndim == 2:
@@ -49,6 +54,8 @@ def riemannian_metric_spd(A, B):
         for i, (a, b) in enumerate(zip(A, B)):
             root = sqrtm(a)
             result[i] = np.sqrt(np.trace(a) + np.trace(b) - 2*np.trace(sqrtm(root @ b @ root)))
+        if normalize:
+            return result / np.sum(result)
         return result
     
 
@@ -103,15 +110,18 @@ def ponderated_difference(data, distance, k, alpha):
     return results
 
 
+def spectral_width(eigenvalues):
+    sorted_eigenvalues = np.sort(eigenvalues)
+    spectral_widths = np.zeros(eigenvalues.shape[0])
+    weights = np.arange(0, eigenvalues.shape[-1], 1)
+    for i in range(len(eigenvalues)):
+        spectral_widths[i] = np.sum(weights * sorted_eigenvalues[i]) / np.sum(sorted_eigenvalues[i])
+    return spectral_widths
+
+
 if __name__=='__main__':
 
     # Create a simple test dataset: a list of 1D arrays with increasing integers
-    data = [np.array([[1, 2], [3, 4]])*i for i in range(10)]
-    k = 50
+    data = [np.array([1, 2])*i for i in range(10)]
 
-    result = ponderated_difference(data, riemannian_metric_spd, k, 10e-32)
-
-    print("Input data:")
-    print(np.array(data))
-    print("\nResult of ponderated_difference:")
-    print(result)
+    print(np.array([1, 2]) * data)
